@@ -1,0 +1,8 @@
+---
+- ansible.builtin.import_tasks: kubectl.yml
+- ansible.builtin.import_tasks: helm.yml
+- ansible.builtin.import_tasks: k9s.yml
+- ansible.builtin.import_tasks: kubectx.yml
+- ansible.builtin.import_tasks: kustomize.yml
+- ansible.builtin.import_tasks: flux.yml
+- ansible.builtin.import_tasks: argocd.yml
