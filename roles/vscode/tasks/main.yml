@@ -36,7 +36,7 @@
   ansible.builtin.lineinfile:
     path: "{{ ansible_env.HOME }}/.bashrc"
     regexp: '^export PATH=.*Microsoft VS Code'
-    line: 'export PATH="$PATH:{{ vscode_found_path.stdout }}"'
+    line: 'export PATH="$PATH:{{ vscode_found_path.stdout | default("") | trim }}"'
   when:
     - code_in_path.rc != 0
     - (vscode_found_path.rc | default(1)) == 0

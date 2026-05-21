@@ -5,6 +5,7 @@
   register: starship_binary
 
 - name: Install starship
+  become: true
   ansible.builtin.shell:
     cmd: curl -sS https://starship.rs/install.sh | sh -s -- --yes
   when: not starship_binary.stat.exists
