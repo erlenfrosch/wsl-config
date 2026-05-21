@@ -1,1 +1,21 @@
 ---
+- name: Check if argocd is installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/argocd
+  register: argocd_binary
+
+- name: Get latest argocd release info
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/argoproj/argo-cd/releases/latest
+    return_content: true
+  register: argocd_release
+  when: not argocd_binary.stat.exists
+
+- name: Install argocd
+  become: true
+  ansible.builtin.shell: |
+    VERSION="{{ argocd_release.json.tag_name }}"
+    curl -sL "https://github.com/argoproj/argo-cd/releases/download/${VERSION}/argocd-linux-amd64" \
+      -o /usr/local/bin/argocd
+    chmod +x /usr/local/bin/argocd
+  when: not argocd_binary.stat.exists
