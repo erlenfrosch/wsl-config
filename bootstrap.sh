@@ -9,4 +9,9 @@ if ! command -v ansible-playbook &>/dev/null; then
     sudo apt-get install -y ansible
 fi
 
-ansible-playbook -i "${SCRIPT_DIR}/inventory.ini" "${SCRIPT_DIR}/site.yml" "$@"
+BECOME_ARGS=""
+if ! sudo -n true 2>/dev/null; then
+    BECOME_ARGS="-K"
+fi
+
+ansible-playbook -i "${SCRIPT_DIR}/inventory.ini" "${SCRIPT_DIR}/site.yml" $BECOME_ARGS "$@"

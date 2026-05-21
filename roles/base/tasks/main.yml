@@ -19,6 +19,15 @@
       - gnupg
     state: present
 
+- name: Configure passwordless sudo for current user
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/{{ ansible_env.USER }}
+    line: "{{ ansible_env.USER }} ALL=(ALL) NOPASSWD:ALL"
+    create: true
+    mode: '0440'
+    validate: 'visudo -cf %s'
+
 - name: Configure SSH agent auto-start in .bashrc
   ansible.builtin.blockinfile:
     path: "{{ ansible_env.HOME }}/.bashrc"
