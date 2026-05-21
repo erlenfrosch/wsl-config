@@ -18,7 +18,8 @@ wsl-config/
 │   ├── python/           # pyenv + aktuelle stabile Python-Version
 │   ├── go/               # goenv + aktuelle stabile Go-Version
 │   ├── k8s/              # kubectl, helm, k9s, kubectx, kubens, kustomize, flux, argocd
-│   └── terminal/         # starship + starship.toml deployen
+│   ├── terminal/         # starship + starship.toml deployen
+│   └── vscode/           # VS Code WSL-Integration sicherstellen
 └── files/
     └── starship.toml     # versionierte Starship-Konfiguration
 ```
@@ -52,6 +53,13 @@ Jedes Tool in einer eigenen Task-Datei unter `roles/k8s/tasks/`:
 | `kustomize` | GitHub Releases (Binary, prüft ob vorhanden) |
 | `flux` | GitHub Releases (Binary, prüft ob vorhanden) |
 | `argocd` | GitHub Releases (Binary, prüft ob vorhanden) |
+
+### `vscode`
+VS Code selbst wird auf der Windows-Seite installiert (Voraussetzung, nicht vom Script verwaltet). Die Role stellt sicher, dass `code .` aus WSL heraus funktioniert:
+
+1. **Windows PATH Interop**: `/etc/wsl.conf` wird mit `[interop] appendWindowsPath = true` konfiguriert (idempotent via `lineinfile`), damit WSL den Windows-PATH erbt
+2. **Fallback PATH-Eintrag**: Falls `code` nach der Interop-Prüfung nicht im PATH ist, sucht die Role VS Code in den üblichen Windows-Installationspfaden (`/mnt/c/Users/*/AppData/Local/Programs/Microsoft VS Code/bin`, `/mnt/c/Program Files/Microsoft VS Code/bin`) und trägt den gefundenen Pfad in `~/.bashrc` ein
+3. **Voraussetzungs-Check**: Task schlägt mit sprechender Fehlermeldung fehl wenn VS Code nirgends gefunden wird, anstatt still zu versagen
 
 ### `terminal`
 - Starship via offizielles Install-Script (idempotent durch Versionscheck)
@@ -89,6 +97,7 @@ Aktive Module und ihr Zweck:
 ansible-playbook site.yml --tags python
 ansible-playbook site.yml --tags k8s
 ansible-playbook site.yml --tags terminal
+ansible-playbook site.yml --tags vscode
 ```
 
 ## Abhängigkeiten
@@ -98,6 +107,6 @@ Keine externen Abhängigkeiten außer `apt` und `curl` — beides in Ubuntu stan
 ## Nicht im Scope
 
 - Windows-seitige Konfiguration (Windows Terminal, etc.)
+- VS Code Installation auf Windows (Voraussetzung, muss manuell erfolgen)
 - Docker / container runtime
-- IDE-Setup
 - SSH-Key-Management
