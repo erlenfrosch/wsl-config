@@ -1,0 +1,54 @@
+---
+- name: Check if goenv is installed
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.goenv/bin/goenv"
+  register: goenv_binary
+
+- name: Clone goenv
+  ansible.builtin.git:
+    repo: https://github.com/go-nv/goenv.git
+    dest: "{{ ansible_env.HOME }}/.goenv"
+    version: master
+    update: false
+  when: not goenv_binary.stat.exists
+
+- name: Set GOENV_ROOT in .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    regexp: '^export GOENV_ROOT='
+    line: 'export GOENV_ROOT="$HOME/.goenv"'
+
+- name: Add goenv bin to PATH in .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    regexp: '^export PATH="\$GOENV_ROOT'
+    line: 'export PATH="$GOENV_ROOT/bin:$PATH"'
+
+- name: Initialize goenv in .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    regexp: '^eval "\$\(goenv init'
+    line: 'eval "$(goenv init -)"'
+
+- name: Get latest stable Go version
+  ansible.builtin.shell: |
+    export GOENV_ROOT="{{ ansible_env.HOME }}/.goenv"
+    export PATH="$GOENV_ROOT/bin:$PATH"
+    goenv install --list | grep -E '^\s+[0-9]+\.[0-9]+(\.[0-9]+)?$' | grep -v 'rc\|beta\|alpha' | tail -1 | tr -d ' '
+  register: latest_go
+  changed_when: false
+
+- name: Install latest stable Go
+  ansible.builtin.shell: |
+    export GOENV_ROOT="{{ ansible_env.HOME }}/.goenv"
+    export PATH="$GOENV_ROOT/bin:$PATH"
+    goenv install --skip-existing {{ latest_go.stdout }}
+  args:
+    creates: "{{ ansible_env.HOME }}/.goenv/versions/{{ latest_go.stdout }}"
+
+- name: Set global Go version
+  ansible.builtin.shell: |
+    export GOENV_ROOT="{{ ansible_env.HOME }}/.goenv"
+    export PATH="$GOENV_ROOT/bin:$PATH"
+    goenv global {{ latest_go.stdout }}
+  changed_when: false
