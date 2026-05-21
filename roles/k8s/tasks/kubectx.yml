@@ -1,1 +1,6 @@
 ---
+- name: Install kubectx and kubens
+  become: true
+  ansible.builtin.apt:
+    name: kubectx
+    state: present
