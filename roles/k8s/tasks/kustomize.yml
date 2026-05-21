@@ -1,1 +1,14 @@
 ---
+- name: Check if kustomize is installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/kustomize
+  register: kustomize_binary
+
+- name: Install kustomize
+  become: true
+  ansible.builtin.shell:
+    cmd: >
+      curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
+      | bash -s -- /usr/local/bin
+    creates: /usr/local/bin/kustomize
+  when: not kustomize_binary.stat.exists
