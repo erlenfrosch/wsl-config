@@ -18,3 +18,13 @@
       - software-properties-common
       - gnupg
     state: present
+
+- name: Configure SSH agent auto-start in .bashrc
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    marker: "# {mark} ANSIBLE MANAGED - ssh-agent"
+    block: |
+      if [ -z "$SSH_AUTH_SOCK" ]; then
+        eval "$(ssh-agent -s)" > /dev/null
+        ssh-add ~/.ssh/id_ed25519 2>/dev/null
+      fi
