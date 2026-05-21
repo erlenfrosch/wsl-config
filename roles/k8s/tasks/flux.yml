@@ -1,1 +1,11 @@
 ---
+- name: Check if flux is installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/flux
+  register: flux_binary
+
+- name: Install flux
+  become: true
+  ansible.builtin.shell:
+    cmd: curl -s https://fluxcd.io/install.sh | bash
+  when: not flux_binary.stat.exists
