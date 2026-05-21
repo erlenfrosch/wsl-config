@@ -1,0 +1,49 @@
+---
+- name: Configure WSL interop to inherit Windows PATH
+  become: true
+  ansible.builtin.blockinfile:
+    path: /etc/wsl.conf
+    create: true
+    marker: "# {mark} ANSIBLE MANAGED - interop"
+    block: |
+      [interop]
+      appendWindowsPath = true
+    mode: '0644'
+
+- name: Check if code command is available in PATH
+  ansible.builtin.shell: command -v code
+  register: code_in_path
+  failed_when: false
+  changed_when: false
+
+- name: Find VS Code installation in Windows paths
+  ansible.builtin.shell: |
+    for path in \
+      "/mnt/c/Users/{{ ansible_env.USER }}/AppData/Local/Programs/Microsoft VS Code/bin" \
+      "/mnt/c/Program Files/Microsoft VS Code/bin"; do
+      if [ -d "$path" ]; then
+        echo "$path"
+        exit 0
+      fi
+    done
+    exit 1
+  register: vscode_found_path
+  failed_when: false
+  changed_when: false
+  when: code_in_path.rc != 0
+
+- name: Add VS Code to PATH in .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    regexp: '^export PATH=.*Microsoft VS Code'
+    line: 'export PATH="$PATH:{{ vscode_found_path.stdout }}"'
+  when:
+    - code_in_path.rc != 0
+    - (vscode_found_path.rc | default(1)) == 0
+
+- name: Warn if VS Code not found on Windows
+  ansible.builtin.debug:
+    msg: "WARNING: VS Code not found. Install VS Code on Windows, then re-run: ansible-playbook -i inventory.ini site.yml --tags vscode"
+  when:
+    - code_in_path.rc != 0
+    - (vscode_found_path.rc | default(1)) != 0
