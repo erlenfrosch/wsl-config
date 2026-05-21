@@ -1,0 +1,28 @@
+---
+- name: Check if starship is installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/starship
+  register: starship_binary
+
+- name: Install starship
+  ansible.builtin.shell:
+    cmd: curl -sS https://starship.rs/install.sh | sh -s -- --yes
+  when: not starship_binary.stat.exists
+
+- name: Create .config directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config"
+    state: directory
+    mode: '0755'
+
+- name: Deploy starship.toml
+  ansible.builtin.copy:
+    src: starship.toml
+    dest: "{{ ansible_env.HOME }}/.config/starship.toml"
+    mode: '0644'
+
+- name: Initialize starship in .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    regexp: '^eval "\$\(starship init'
+    line: 'eval "$(starship init bash)"'
