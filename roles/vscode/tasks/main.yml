@@ -47,3 +47,47 @@
   when:
     - code_in_path.rc != 0
     - (vscode_found_path.rc | default(1)) != 0
+
+# Extension installation – idempotent via changed_when on output text
+- name: Install VS Code extensions
+  ansible.builtin.shell: |
+    {% if code_in_path.rc != 0 and (vscode_found_path.rc | default(1)) == 0 %}
+    export PATH="$PATH:{{ vscode_found_path.stdout | trim }}"
+    {% endif %}
+    code --install-extension {{ item.id }} 2>&1
+  register: ext_result
+  changed_when: "'already installed' not in ext_result.stdout"
+  failed_when: ext_result.rc != 0
+  loop:
+    # ── WSL ──────────────────────────────────────────────────────────────
+    - { id: ms-vscode-remote.remote-wsl,              desc: "Remote – WSL" }
+
+    # ── Python ───────────────────────────────────────────────────────────
+    - { id: ms-python.python,                         desc: "Python (core)" }
+    - { id: ms-python.vscode-pylance,                 desc: "Pylance (language server)" }
+    - { id: ms-python.black-formatter,                desc: "Black formatter" }
+    - { id: ms-python.isort,                          desc: "isort import sorter" }
+    - { id: charliermarsh.ruff,                       desc: "Ruff linter" }
+    - { id: ms-python.debugpy,                        desc: "Python Debugger" }
+    - { id: ms-toolsai.jupyter,                       desc: "Jupyter notebooks" }
+
+    # ── Go ───────────────────────────────────────────────────────────────
+    - { id: golang.go,                                desc: "Go (official)" }
+
+    # ── Kubernetes / Cloud Native ─────────────────────────────────────────
+    - { id: ms-kubernetes-tools.vscode-kubernetes-tools, desc: "Kubernetes Tools" }
+    - { id: redhat.vscode-yaml,                       desc: "YAML (k8s manifests)" }
+    - { id: ms-azuretools.vscode-docker,              desc: "Docker" }
+    - { id: tim-koehler.helm-intellisense,            desc: "Helm IntelliSense" }
+    - { id: mindaro-dev.mindaro,                      desc: "Bridge to Kubernetes" }
+
+    # ── Übersichtlichkeit ────────────────────────────────────────────────
+    - { id: oderwat.indent-rainbow,                   desc: "Indent Rainbow" }
+
+    # ── DevOps / Git ─────────────────────────────────────────────────────
+    - { id: hashicorp.terraform,                      desc: "Terraform (IaC for k8s infra)" }
+    - { id: github.vscode-github-actions,             desc: "GitHub Actions" }
+    - { id: eamodio.gitlens,                          desc: "GitLens" }
+  when: code_in_path.rc == 0 or (vscode_found_path.rc | default(1)) == 0
+  loop_control:
+    label: "{{ item.desc }}"
