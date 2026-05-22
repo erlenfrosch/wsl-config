@@ -81,6 +81,9 @@
     - { id: tim-koehler.helm-intellisense,            desc: "Helm IntelliSense" }
     - { id: mindaro-dev.mindaro,                      desc: "Bridge to Kubernetes" }
 
+    # ── Übersichtlichkeit ────────────────────────────────────────────────
+    - { id: oderwat.indent-rainbow,                   desc: "Indent Rainbow" }
+
     # ── DevOps / Git ─────────────────────────────────────────────────────
     - { id: hashicorp.terraform,                      desc: "Terraform (IaC for k8s infra)" }
     - { id: github.vscode-github-actions,             desc: "GitHub Actions" }
