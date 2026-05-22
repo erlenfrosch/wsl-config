@@ -29,7 +29,14 @@
       ansible.builtin.uri:
         url: https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest
         return_content: true
+        headers:
+          Accept: "application/vnd.github.v3+json"
+          User-Agent: "ansible-wsl-setup"
+        status_code: 200
       register: nerd_fonts_release
+      retries: 5
+      delay: 10
+      until: nerd_fonts_release.status == 200
 
     - name: Download JetBrainsMono font archive
       ansible.builtin.shell: |
