@@ -8,4 +8,5 @@
     - { role: go,       tags: go }
     - { role: k8s,      tags: k8s }
     - { role: terminal, tags: terminal }
+    - { role: fonts,    tags: fonts }
     - { role: vscode,   tags: vscode }

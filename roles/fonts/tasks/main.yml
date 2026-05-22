@@ -1,0 +1,51 @@
+---
+# Fonts werden in das Windows-seitige Benutzerverzeichnis installiert,
+# da WSL Windows Terminal als Host-Anwendung nutzt.
+
+- name: Set Windows user fonts directory path
+  ansible.builtin.set_fact:
+    win_fonts_dir: "/mnt/c/Users/{{ ansible_env.USER }}/AppData/Local/Microsoft/Windows/Fonts"
+
+- name: Create Windows user fonts directory
+  ansible.builtin.file:
+    path: "{{ win_fonts_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Check if JetBrainsMono Nerd Font is already installed
+  ansible.builtin.stat:
+    path: "{{ win_fonts_dir }}/JetBrainsMonoNerdFont-Regular.ttf"
+  register: font_check
+
+- name: Install JetBrainsMono Nerd Font
+  when: not font_check.stat.exists
+  block:
+    - name: Get latest Nerd Fonts release
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest
+        return_content: true
+      register: nerd_fonts_release
+
+    - name: Download JetBrainsMono font archive
+      ansible.builtin.shell: |
+        VERSION="{{ nerd_fonts_release.json.tag_name }}"
+        curl -sL "https://github.com/ryanoasis/nerd-fonts/releases/download/${VERSION}/JetBrainsMono.zip" \
+          -o /tmp/JetBrainsMono.zip
+      args:
+        creates: /tmp/JetBrainsMono.zip
+
+    - name: Extract TTF files to Windows user fonts directory
+      ansible.builtin.shell: |
+        unzip -o /tmp/JetBrainsMono.zip "*.ttf" -d "{{ win_fonts_dir }}"
+        rm -f /tmp/JetBrainsMono.zip
+
+    - name: Register fonts in Windows user registry
+      ansible.builtin.shell: |
+        for font in "{{ win_fonts_dir }}"/*.ttf; do
+          fontname=$(basename "$font")
+          win_path=$(wslpath -w "$font")
+          /mnt/c/Windows/System32/reg.exe add \
+            "HKCU\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts" \
+            /v "${fontname%.ttf} (TrueType)" \
+            /t REG_SZ /d "$win_path" /f 2>/dev/null || true
+        done
