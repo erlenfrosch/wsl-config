@@ -7,10 +7,9 @@
     win_fonts_dir: "/mnt/c/Users/{{ ansible_env.USER }}/AppData/Local/Microsoft/Windows/Fonts"
 
 - name: Create Windows user fonts directory
-  ansible.builtin.file:
-    path: "{{ win_fonts_dir }}"
-    state: directory
-    mode: '0755'
+  ansible.builtin.shell:
+    cmd: mkdir -p "{{ win_fonts_dir }}"
+    creates: "{{ win_fonts_dir }}"
 
 - name: Check if JetBrainsMono Nerd Font is already installed
   ansible.builtin.stat:
