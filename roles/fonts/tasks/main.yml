@@ -2,9 +2,15 @@
 # Fonts werden in das Windows-seitige Benutzerverzeichnis installiert,
 # da WSL Windows Terminal als Host-Anwendung nutzt.
 
+- name: Get Windows username
+  ansible.builtin.shell:
+    cmd: cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r\n'
+  register: win_username
+  changed_when: false
+
 - name: Set Windows user fonts directory path
   ansible.builtin.set_fact:
-    win_fonts_dir: "/mnt/c/Users/{{ ansible_env.USER }}/AppData/Local/Microsoft/Windows/Fonts"
+    win_fonts_dir: "/mnt/c/Users/{{ win_username.stdout }}/AppData/Local/Microsoft/Windows/Fonts"
 
 - name: Create Windows user fonts directory
   ansible.builtin.shell:
