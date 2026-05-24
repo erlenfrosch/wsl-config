@@ -25,3 +25,21 @@
     name: kubectl
     state: present
     update_cache: true
+
+- name: Install kubectl bash completion system-wide
+  become: true
+  ansible.builtin.shell:
+    cmd: kubectl completion bash | tee /etc/bash_completion.d/kubectl > /dev/null
+    creates: /etc/bash_completion.d/kubectl
+
+- name: Add kubectl alias k to .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    regexp: '^alias k=kubectl'
+    line: 'alias k=kubectl'
+
+- name: Add completion for alias k to .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    regexp: '^complete -o default -F __start_kubectl k'
+    line: 'complete -o default -F __start_kubectl k'
