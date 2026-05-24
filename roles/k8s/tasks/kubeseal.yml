@@ -1,0 +1,30 @@
+---
+- name: Check if kubeseal is installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/kubeseal
+  register: kubeseal_binary
+
+- name: Install kubeseal
+  when: not kubeseal_binary.stat.exists
+  block:
+    - name: Get latest kubeseal release info
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/bitnami-labs/sealed-secrets/releases/latest
+        return_content: true
+        headers:
+          Accept: "application/vnd.github.v3+json"
+          User-Agent: "ansible-wsl-setup"
+        status_code: 200
+      register: kubeseal_release
+      retries: 5
+      delay: 10
+      until: kubeseal_release.status == 200
+
+    - name: Download and install kubeseal binary
+      become: true
+      ansible.builtin.shell: |
+        VERSION="{{ kubeseal_release.json.tag_name }}"
+        curl -sL "https://github.com/bitnami-labs/sealed-secrets/releases/download/${VERSION}/kubeseal-${VERSION#v}-linux-amd64.tar.gz" \
+          | tar xz -C /tmp kubeseal
+        mv /tmp/kubeseal /usr/local/bin/kubeseal
+        chmod +x /usr/local/bin/kubeseal
